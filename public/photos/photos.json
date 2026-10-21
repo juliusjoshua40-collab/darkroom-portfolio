@@ -1,0 +1,110 @@
+[
+  {
+    "id": "EXP-001",
+    "frame": "01A",
+    "title": "CAUSTIC REFRACTION IV",
+    "date": "2026-08-14",
+    "camera": "Hasselblad 500C/M · Planar 80mm f/2.8 · Ilford HP5 Plus pushed +2",
+    "exif": {
+      "iso": "1600",
+      "aperture": "f/2.8",
+      "shutter": "1/60s",
+      "developer": "Ilford Microphen 1+1 (14m @ 20°C)"
+    },
+    "caption": "Light bent through industrial fluted glass at 02:00 AM under sodium-vapor streetlamps. Developing at +2 stops fractured the midtones into metallic silver clusters.",
+    "src": "/photos/photo-01.svg",
+    "aspect": "4/5",
+    "palette": ["#FF9F1C", "#EAEAEA", "#0A0A0A"],
+    "seed": 1.15
+  },
+  {
+    "id": "EXP-002",
+    "frame": "07B",
+    "title": "BRUTALIST CANTILEVER IN FOG",
+    "date": "2026-06-29",
+    "camera": "Leica M6 TTL · Summilux 35mm f/1.4 · Kodak Tri-X 400",
+    "exif": {
+      "iso": "400",
+      "aperture": "f/8.0",
+      "shutter": "1/250s",
+      "developer": "Kodak D-76 Stock (9m @ 20°C)"
+    },
+    "caption": "Concrete geometry dissolving into coastal advection fog. Exposed for the specular edge so the underside drops into pure D-max black.",
+    "src": "/photos/photo-02.svg",
+    "aspect": "4/5",
+    "palette": ["#D8D8D8", "#FF9F1C", "#090909"],
+    "seed": 2.42
+  },
+  {
+    "id": "EXP-003",
+    "frame": "12A",
+    "title": "SOLARIZED FERROFLUID HARMONICS",
+    "date": "2026-09-03",
+    "camera": "Pentax 67II · Macro Takumar 135mm f/4 · Rollei Ortho 25",
+    "exif": {
+      "iso": "25",
+      "aperture": "f/11",
+      "shutter": "4.0s",
+      "developer": "Rodinal 1+50 + Sabattier Re-exposure"
+    },
+    "caption": "Magnetic standing waves excited by a 48Hz sine wave and briefly flashed with amber safelight mid-development to trigger the Sabattier edge reversal.",
+    "src": "/photos/photo-03.svg",
+    "aspect": "4/5",
+    "palette": ["#FF9F1C", "#FF4D00", "#0A0A0A"],
+    "seed": 3.87
+  },
+  {
+    "id": "EXP-004",
+    "frame": "19C",
+    "title": "ANALOG OSCILLOSCOPE LISSAJOUS",
+    "date": "2026-05-18",
+    "camera": "Nikon F3HP · Noct-Nikkor 58mm f/1.2 · CineStill Double-X",
+    "exif": {
+      "iso": "800",
+      "aperture": "f/1.2",
+      "shutter": "1/15s",
+      "developer": "Eastman D-96 (7.5m @ 21°C)"
+    },
+    "caption": "Phosphor persistence captured directly off a 1978 Tektronix CRT driven by a custom WebAudio modular synthesizer patch.",
+    "src": "/photos/photo-04.svg",
+    "aspect": "4/5",
+    "palette": ["#FFE0B2", "#FF9F1C", "#050505"],
+    "seed": 4.61
+  },
+  {
+    "id": "EXP-005",
+    "frame": "24A",
+    "title": "SILVER HALIDE DRIFT // CHEMIGRAM",
+    "date": "2026-07-11",
+    "camera": "Camera-less Darkroom Chemigram · Ilford Multigrade Fiber Warmtone",
+    "exif": {
+      "iso": "PAPER",
+      "aperture": "N/A",
+      "shutter": "180s",
+      "developer": "Selective Fixer / Developer Resist"
+    },
+    "caption": "Direct chemical painting on fiber-based silver gelatin paper. Resist layers of beeswax and developer etched organic topography without a lens.",
+    "src": "/photos/photo-05.svg",
+    "aspect": "4/5",
+    "palette": ["#FF9F1C", "#B8B8B8", "#0A0A0A"],
+    "seed": 5.29
+  },
+  {
+    "id": "EXP-006",
+    "frame": "36END",
+    "title": "SODIUM VAPOR TRANSIT",
+    "date": "2026-10-02",
+    "camera": "Mamiya 7II · 65mm f/4 L · CineStill 800T (C-41 Cross-Processed)",
+    "exif": {
+      "iso": "800",
+      "aperture": "f/4.0",
+      "shutter": "2.5s",
+      "developer": "Bellini C-41 Push +1"
+    },
+    "caption": "Long-exposure halation bleed from an elevated rail line cutting through rain-slicked asphalt at midnight.",
+    "src": "/photos/photo-06.svg",
+    "aspect": "4/5",
+    "palette": ["#FF6B00", "#FF9F1C", "#080808"],
+    "seed": 6.74
+  }
+]

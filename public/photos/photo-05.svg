@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <radialGradient id="chem" cx="35%" cy="60%" r="70%">
+      <stop offset="0%" stop-color="#FF9F1C" stop-opacity="0.85"/>
+      <stop offset="40%" stop-color="#D6D6D6" stop-opacity="0.5"/>
+      <stop offset="75%" stop-color="#171717" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#070707" stop-opacity="1"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="1000" fill="#080808"/>
+  <rect width="800" height="1000" fill="url(#chem)"/>
+  <g fill="none" stroke="#EAEAEA" stroke-width="1.5" opacity="0.55">
+    <path d="M 80 180 Q 320 90, 520 260 T 740 420"/>
+    <path d="M 60 280 Q 350 180, 500 380 T 760 540" stroke="#FF9F1C" stroke-width="2.2"/>
+    <path d="M 40 390 Q 380 290, 490 500 T 750 670"/>
+    <path d="M 90 510 Q 390 420, 470 640 T 720 790" stroke="#FF9F1C"/>
+    <path d="M 110 640 Q 410 560, 460 760 T 700 880"/>
+  </g>
+  <text x="40" y="955" fill="#FF9F1C" font-family="monospace" font-size="15" letter-spacing="4" opacity="0.8">ILFORD WARMTONE · FRAME 24A · SILVER HALIDE DRIFT</text>
+</svg>

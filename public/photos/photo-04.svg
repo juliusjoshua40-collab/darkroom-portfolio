@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <rect width="800" height="1000" fill="#060606"/>
+  <g stroke="#222" stroke-width="1">
+    <line x1="0" y1="200" x2="800" y2="200"/>
+    <line x1="0" y1="400" x2="800" y2="400"/>
+    <line x1="0" y1="600" x2="800" y2="600"/>
+    <line x1="0" y1="800" x2="800" y2="800"/>
+    <line x1="200" y1="0" x2="200" y2="1000"/>
+    <line x1="400" y1="0" x2="400" y2="1000"/>
+    <line x1="600" y1="0" x2="600" y2="1000"/>
+  </g>
+  <g fill="none" transform="translate(400, 480)">
+    <ellipse rx="290" ry="140" stroke="#FF9F1C" stroke-width="2.5" transform="rotate(25)"/>
+    <ellipse rx="290" ry="140" stroke="#FFFFFF" stroke-width="1.5" transform="rotate(-25)" opacity="0.85"/>
+    <ellipse rx="260" ry="220" stroke="#FF9F1C" stroke-width="1.2" transform="rotate(65)" opacity="0.65"/>
+    <ellipse rx="260" ry="220" stroke="#FFE0B2" stroke-width="1.2" transform="rotate(-65)" opacity="0.5"/>
+    <circle r="18" fill="#FF9F1C"/>
+  </g>
+  <text x="40" y="955" fill="#FF9F1C" font-family="monospace" font-size="15" letter-spacing="4" opacity="0.8">CINESTILL DOUBLE-X · FRAME 19C · LISSAJOUS CRT</text>
+</svg>

@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --safelight-accent: #FF9F1C;
+  --safelight-glow: rgba(255, 159, 28, 0.16);
+  --exposure-multiplier: 1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #0A0A0A;
+  color: #E5E5E5;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0A0A0A;
+  color: #E5E5E5;
+  overflow-x: hidden;
+  selection-background-color: #FF9F1C;
+  transition: filter 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::selection {
+  background: rgba(255, 159, 28, 0.3);
+  color: #FFF8EB;
+}
+
+/* Live Terminal Filter Modes */
+html[data-filter-mode="noir"] body {
+  filter: grayscale(1) contrast(1.38) brightness(calc(0.95 * var(--exposure-multiplier)));
+}
+
+html[data-filter-mode="vivid"] body {
+  filter: saturate(1.85) contrast(1.18) hue-rotate(-8deg) brightness(calc(1.06 * var(--exposure-multiplier)));
+}
+
+html[data-filter-mode="glitch"] body {
+  filter: contrast(1.35) saturate(1.5) hue-rotate(18deg) brightness(calc(1.02 * var(--exposure-multiplier)));
+  animation: darkroomGlitchPulse 3.5s infinite;
+}
+
+html[data-filter-mode="default"] body {
+  filter: brightness(var(--exposure-multiplier));
+}
+
+html[data-focus-state="soft"] main {
+  filter: blur(2.4px);
+  transition: filter 0.4s ease;
+}
+
+@keyframes darkroomGlitchPulse {
+  0%, 92%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  94% {
+    transform: translate3d(-2px, 1px, 0) skewX(0.4deg);
+  }
+  96% {
+    transform: translate3d(2px, -1px, 0) skewX(-0.4deg);
+  }
+}
+
+/* Subtle Analog Film Grain Overlay */
+.film-grain-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* 35mm Sprocket Perforations Pattern */
+.sprocket-strip {
+  background-image: radial-gradient(circle, #0A0A0A 38%, transparent 41%);
+  background-size: 28px 18px;
+}
+
+/* Custom Accessible Focus Ring */
+:focus-visible {
+  outline: 2px solid var(--safelight-accent);
+  outline-offset: 3px;
+}
+
+/* Custom Darkroom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #FF9F1C;
+}

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" width="800" height="1000">
+  <defs>
+    <radialGradient id="g1" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#FFF3E0" stop-opacity="0.95"/>
+      <stop offset="28%" stop-color="#FF9F1C" stop-opacity="0.65"/>
+      <stop offset="68%" stop-color="#222222" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#060606" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="flute" x1="0%" y1="0%" x2="100%" y2="0%" spreadMethod="repeat">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.0"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+    </linearGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="3" result="noise"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" in2="noise" mode="overlay"/>
+    </filter>
+  </defs>
+  <rect width="800" height="1000" fill="#070707"/>
+  <ellipse cx="400" cy="440" rx="310" ry="420" fill="url(#g1)" transform="rotate(-14 400 440)"/>
+  <g opacity="0.75">
+    <rect x="40" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="116" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="192" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="268" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="344" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="420" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="496" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="572" y="0" width="36" height="1000" fill="url(#flute)"/>
+    <rect x="648" y="0" width="36" height="1000" fill="url(#flute)"/>
+  </g>
+  <path d="M 120 780 Q 410 210 690 680" fill="none" stroke="#FF9F1C" stroke-width="2.5" opacity="0.65"/>
+  <circle cx="430" cy="390" r="145" fill="none" stroke="#F5F5F5" stroke-width="1.2" opacity="0.5"/>
+  <text x="40" y="955" fill="#FF9F1C" font-family="monospace" font-size="15" letter-spacing="4" opacity="0.8">ILFORD HP5 PLUS · FRAME 01A · CAUSTIC REFRACTION</text>
+</svg>
