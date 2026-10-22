@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Download, RotateCcw, Sparkles, Wand2 } from "lucide-react";
+import { Download, RotateCcw } from "lucide-react";
 import { soundEngine } from "@/utils/sound";
 
 type BrushMode = "caustic" | "lissajous" | "chemigram";
@@ -22,34 +22,32 @@ export function GenerativePlayground() {
   const [brushMode, setBrushMode] = useState<BrushMode>("caustic");
   const [persistence, setPersistence] = useState(0.96);
   const [intensity, setIntensity] = useState(1.2);
-  const pointerRef = useRef({ x: 450, y: 260, active: false, tick: 0 });
+  const pointerRef = useRef({ x: 450, y: 240, active: false, tick: 0 });
   const particlesRef = useRef<Particle[]>([]);
 
-  // Initialize canvas with darkroom base plate and initial light burst
   const seedCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#070707";
+    ctx.fillStyle = "#080808";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Seed initial abstract caustic filaments so the canvas looks alive immediately
     const cx = canvas.width * 0.5;
     const cy = canvas.height * 0.5;
     particlesRef.current = [];
-    for (let i = 0; i < 95; i++) {
-      const angle = (i / 95) * Math.PI * 2;
+    for (let i = 0; i < 80; i++) {
+      const angle = (i / 80) * Math.PI * 2;
       particlesRef.current.push({
         x: cx + Math.cos(angle) * 40,
         y: cy + Math.sin(angle) * 40,
-        vx: Math.cos(angle * 2) * 2.4,
-        vy: Math.sin(angle * 3) * 2.4,
+        vx: Math.cos(angle * 2) * 2.2,
+        vy: Math.sin(angle * 3) * 2.2,
         life: 0,
-        maxLife: 110 + (i % 60),
-        hue: i % 3 === 0 ? 35 : 42,
-        radius: 1.4 + (i % 3) * 0.6,
+        maxLife: 100 + (i % 50),
+        hue: 36,
+        radius: 1.2,
       });
     }
   };
@@ -67,39 +65,36 @@ export function GenerativePlayground() {
     let rafId: number;
 
     const render = () => {
-      pointerRef.current.tick += 0.025;
+      pointerRef.current.tick += 0.02;
       const t = pointerRef.current.tick;
 
-      // Subtle darkroom persistence fade
       ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = `rgba(7, 7, 7, ${(1 - persistence) * 0.35})`;
+      ctx.fillStyle = `rgba(8, 8, 8, ${(1 - persistence) * 0.35})`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Spawn particles when pointer moves or gently orbit center
-      if (pointerRef.current.active || particlesRef.current.length < 35) {
+      if (pointerRef.current.active || particlesRef.current.length < 30) {
         const px = pointerRef.current.active
           ? pointerRef.current.x
-          : canvas.width * 0.5 + Math.cos(t * 1.3) * 180;
+          : canvas.width * 0.5 + Math.cos(t * 1.2) * 160;
         const py = pointerRef.current.active
           ? pointerRef.current.y
-          : canvas.height * 0.5 + Math.sin(t * 1.9) * 110;
+          : canvas.height * 0.5 + Math.sin(t * 1.7) * 95;
 
-        for (let i = 0; i < 3; i++) {
-          const a = t * 3 + i * ((Math.PI * 2) / 3);
+        for (let i = 0; i < 2; i++) {
+          const a = t * 3 + i * Math.PI;
           particlesRef.current.push({
             x: px,
             y: py,
-            vx: Math.cos(a) * 2.2 * intensity,
-            vy: Math.sin(a) * 2.2 * intensity,
+            vx: Math.cos(a) * 2.0 * intensity,
+            vy: Math.sin(a) * 2.0 * intensity,
             life: 0,
-            maxLife: 90 + Math.random() * 60,
-            hue: brushMode === "chemigram" ? 28 : brushMode === "lissajous" ? 45 : 36,
-            radius: 1.2 + Math.random() * 1.5,
+            maxLife: 85 + Math.random() * 55,
+            hue: 36,
+            radius: 1.1 + Math.random() * 1.2,
           });
         }
       }
 
-      // Draw silver-halide & amber safelight filaments
       ctx.globalCompositeOperation = "lighter";
       const list = particlesRef.current;
       for (let i = list.length - 1; i >= 0; i--) {
@@ -113,22 +108,20 @@ export function GenerativePlayground() {
         const prevX = p.x;
         const prevY = p.y;
 
-        // Flow-field curl depending on brushMode
         if (brushMode === "caustic") {
           const curl =
             Math.sin(p.x * 0.012 + t) * Math.cos(p.y * 0.012 - t) * Math.PI * 2;
-          p.vx += Math.cos(curl) * 0.18 * intensity;
-          p.vy += Math.sin(curl) * 0.18 * intensity;
+          p.vx += Math.cos(curl) * 0.16 * intensity;
+          p.vy += Math.sin(curl) * 0.16 * intensity;
         } else if (brushMode === "lissajous") {
-          p.vx += Math.sin(p.y * 0.025 + t * 2) * 0.24 * intensity;
-          p.vy += Math.cos(p.x * 0.025 - t * 2) * 0.24 * intensity;
+          p.vx += Math.sin(p.y * 0.025 + t * 2) * 0.22 * intensity;
+          p.vy += Math.cos(p.x * 0.025 - t * 2) * 0.22 * intensity;
         } else {
-          // Solarized chemigram rings
           const dx = p.x - canvas.width * 0.5;
           const dy = p.y - canvas.height * 0.5;
           const dist = Math.sqrt(dx * dx + dy * dy) + 0.001;
-          p.vx += (-dy / dist) * 0.22 * intensity;
-          p.vy += (dx / dist) * 0.22 * intensity;
+          p.vx += (-dy / dist) * 0.2 * intensity;
+          p.vy += (dx / dist) * 0.2 * intensity;
         }
 
         p.vx *= 0.96;
@@ -136,11 +129,11 @@ export function GenerativePlayground() {
         p.x += p.vx;
         p.y += p.vy;
 
-        const alpha = (1 - p.life / p.maxLife) * 0.42;
+        const alpha = (1 - p.life / p.maxLife) * 0.38;
         ctx.strokeStyle =
-          i % 4 === 0
-            ? `rgba(245, 245, 245, ${alpha})`
-            : `hsla(${p.hue}, 100%, 55%, ${alpha})`;
+          i % 3 === 0
+            ? `rgba(235, 235, 235, ${alpha})`
+            : `rgba(255, 159, 28, ${alpha})`;
         ctx.lineWidth = p.radius;
         ctx.beginPath();
         ctx.moveTo(prevX, prevY);
@@ -159,10 +152,8 @@ export function GenerativePlayground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    pointerRef.current.x = (e.clientX - rect.left) * scaleX;
-    pointerRef.current.y = (e.clientY - rect.top) * scaleY;
+    pointerRef.current.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    pointerRef.current.y = (e.clientY - rect.top) * (canvas.height / rect.height);
     pointerRef.current.active = true;
   };
 
@@ -170,31 +161,9 @@ export function GenerativePlayground() {
     soundEngine.playShutter();
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    // Stamp archival film border metadata before exporting
-    const exportCanvas = document.createElement("canvas");
-    exportCanvas.width = canvas.width;
-    exportCanvas.height = canvas.height + 44;
-    const ectx = exportCanvas.getContext("2d");
-    if (!ectx) return;
-
-    ectx.fillStyle = "#080808";
-    ectx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-    ectx.drawImage(canvas, 0, 0);
-
-    ectx.fillStyle = "#FF9F1C";
-    ectx.font = "12px monospace";
-    ectx.fillText(
-      `THE DARKROOM // CHEMIGRAM PLATE · MODE: ${brushMode.toUpperCase()} · ${new Date()
-        .toISOString()
-        .slice(0, 10)}`,
-      20,
-      canvas.height + 27
-    );
-
-    const dataUrl = exportCanvas.toDataURL("image/png");
+    const dataUrl = canvas.toDataURL("image/png");
     const link = document.createElement("a");
-    link.download = `darkroom-chemigram-${Date.now()}.png`;
+    link.download = `flow-field-${Date.now()}.png`;
     link.href = dataUrl;
     link.click();
   };
@@ -203,73 +172,60 @@ export function GenerativePlayground() {
     <section
       id="light-playground"
       aria-labelledby="playground-heading"
-      className="relative border-t border-darkroom-border bg-[#0A0A0A] py-24 px-4 sm:px-8"
+      className="border-t border-neutral-900 bg-[#0A0A0A] py-24 px-4 sm:px-8"
     >
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-darkroom-border pb-6 lg:flex-row lg:items-end">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex flex-col justify-between gap-4 border-b border-neutral-800 pb-6 md:flex-row md:items-end">
           <div>
-            <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-darkroom-amber">
-              <Wand2 className="h-3.5 w-3.5" />
-              <span>04 // GENERATIVE DARKROOM PLAYGROUND (LIGHT-PAINTING LAB)</span>
-            </div>
+            <p className="font-mono text-xs text-amber-500">05 / Vector Field Study</p>
             <h2
               id="playground-heading"
-              className="mt-2 font-display text-3xl font-bold tracking-tight text-white sm:text-5xl"
+              className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-4xl"
             >
-              INTERACTIVE CHEMIGRAM STUDIO
+              Interactive Flow-Field Canvas
             </h2>
-            <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-darkroom-muted">
-              Sweep your cursor across the unexposed silver-halide emulsion plate to paint refractive caustic light trails. Customize the optical formula below and export your print as an archival PNG.
+            <p className="mt-2 max-w-2xl text-sm text-neutral-400">
+              Drag across the canvas to perturb the 2D curl-noise velocity field and export high-contrast frames as PNG.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+          <div className="flex items-center gap-2 font-mono text-xs">
             <button
               type="button"
-              onClick={() => {
-                soundEngine.playShutter();
-                seedCanvas();
-              }}
-              className="inline-flex items-center gap-1.5 border border-darkroom-border bg-darkroom-surface px-3.5 py-2 text-darkroom-silver hover:border-darkroom-amber hover:text-darkroom-amber"
+              onClick={seedCanvas}
+              className="inline-flex items-center gap-1.5 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-neutral-300 hover:border-neutral-700 hover:text-white"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Fresh Emulsion Plate</span>
+              <span>Reset</span>
             </button>
-
             <button
               type="button"
               onClick={handleSavePng}
-              className="inline-flex items-center gap-1.5 border border-darkroom-amber bg-darkroom-amber px-4 py-2 font-semibold text-black transition hover:bg-white"
+              className="inline-flex items-center gap-1.5 rounded bg-white px-3.5 py-1.5 font-medium text-black hover:bg-neutral-200"
             >
               <Download className="h-3.5 w-3.5" />
-              <span>Save as PNG</span>
+              <span>Export PNG</span>
             </button>
           </div>
         </div>
 
-        {/* Control Bar */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4 border border-darkroom-border bg-darkroom-surface/80 p-3 font-mono text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] text-darkroom-muted">OPTICAL FORMULA:</span>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-md border border-neutral-800 bg-[#0E0E0E] p-3 font-mono text-xs">
+          <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
-                { id: "caustic", label: "01. Caustic Curl" },
-                { id: "lissajous", label: "02. Lissajous Harmonics" },
-                { id: "chemigram", label: "03. Orbital Chemigram" },
+                { id: "caustic", label: "Curl Noise" },
+                { id: "lissajous", label: "Harmonic Phase" },
+                { id: "chemigram", label: "Orbital Field" },
               ] as { id: BrushMode; label: string }[]
             ).map((b) => (
               <button
                 key={b.id}
                 type="button"
-                onClick={() => {
-                  soundEngine.playShutter();
-                  setBrushMode(b.id);
-                }}
-                className={`border px-3 py-1 text-[11px] uppercase transition ${
+                onClick={() => setBrushMode(b.id)}
+                className={`rounded px-2.5 py-1 transition ${
                   brushMode === b.id
-                    ? "border-darkroom-amber bg-darkroom-amber/20 text-darkroom-amber font-semibold"
-                    : "border-darkroom-border bg-black text-darkroom-muted hover:text-white"
+                    ? "bg-amber-500/20 text-amber-400 border border-amber-500/50"
+                    : "bg-neutral-900 text-neutral-400 border border-neutral-800"
                 }`}
               >
                 {b.label}
@@ -277,9 +233,9 @@ export function GenerativePlayground() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-[11px] text-darkroom-muted">
-              <span>SILVER PERSISTENCE:</span>
+          <div className="flex flex-wrap items-center gap-4 text-neutral-400">
+            <label className="flex items-center gap-2">
+              <span>Decay</span>
               <input
                 type="range"
                 min="0.88"
@@ -287,11 +243,11 @@ export function GenerativePlayground() {
                 step="0.01"
                 value={persistence}
                 onChange={(e) => setPersistence(parseFloat(e.target.value))}
-                className="w-24 accent-darkroom-amber"
+                className="w-20 accent-amber-500"
               />
             </label>
-            <label className="flex items-center gap-2 text-[11px] text-darkroom-muted">
-              <span>PHOTON FLUX:</span>
+            <label className="flex items-center gap-2">
+              <span>Velocity</span>
               <input
                 type="range"
                 min="0.5"
@@ -299,36 +255,25 @@ export function GenerativePlayground() {
                 step="0.1"
                 value={intensity}
                 onChange={(e) => setIntensity(parseFloat(e.target.value))}
-                className="w-24 accent-darkroom-amber"
+                className="w-20 accent-amber-500"
               />
             </label>
           </div>
         </div>
 
-        {/* Interactive Light-Painting Canvas */}
-        <div className="relative overflow-hidden border border-darkroom-border bg-[#070707] shadow-[0_0_50px_rgba(0,0,0,0.85)]">
+        <div className="overflow-hidden rounded-md border border-neutral-800 bg-[#080808]">
           <canvas
             ref={canvasRef}
             width={1100}
-            height={520}
+            height={460}
             onPointerMove={handlePointerMove}
             onPointerDown={handlePointerMove}
             onPointerLeave={() => {
               pointerRef.current.active = false;
             }}
-            aria-label="Interactive generative darkroom light-painting canvas"
-            className="h-[360px] w-full cursor-crosshair touch-none sm:h-[480px]"
+            aria-label="Interactive flow-field canvas"
+            className="h-[320px] w-full cursor-crosshair touch-none sm:h-[420px]"
           />
-
-          <div className="pointer-events-none absolute bottom-3 left-3 right-3 flex items-center justify-between font-mono text-[10px] text-darkroom-muted">
-            <span className="bg-black/75 px-2.5 py-1 text-darkroom-amber">
-              <Sparkles className="mr-1 inline h-3 w-3" />
-              MOVE CURSOR OR DRAG TO EXPOSE SILVER HALIDE CRYSTALS
-            </span>
-            <span className="hidden bg-black/75 px-2.5 py-1 sm:inline">
-              RESOLUTION: 1100×520 ARCHIVAL PLATE
-            </span>
-          </div>
         </div>
       </div>
     </section>

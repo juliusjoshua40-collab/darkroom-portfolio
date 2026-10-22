@@ -4,16 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Aperture,
-  Calendar,
-  Camera,
-  Maximize2,
-  Shuffle,
-  Sliders,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Maximize2, Shuffle, Sliders, X } from "lucide-react";
 import photosData from "../../public/photos/photos.json";
 import { useDarkroom } from "@/context/DarkroomContext";
 import { soundEngine } from "@/utils/sound";
@@ -39,7 +30,6 @@ export interface PhotoRecord {
 
 const VERTEX_SHADER = /* glsl */ `
   varying vec2 vUv;
-  varying float vWave;
   uniform float uTime;
   uniform float uHover;
   uniform vec2 uMouse;
@@ -47,22 +37,15 @@ const VERTEX_SHADER = /* glsl */ `
   void main() {
     vUv = uv;
     vec3 pos = position;
-
-    // Distance from pointer in UV space
     float dist = distance(uv, uMouse);
-    float ripple = sin(dist * 22.0 - uTime * 5.0) * exp(-dist * 4.5);
-    float elevation = ripple * 0.085 * uHover;
-
-    pos.z += elevation;
-    vWave = elevation;
-
+    float ripple = sin(dist * 20.0 - uTime * 4.5) * exp(-dist * 4.5);
+    pos.z += ripple * 0.065 * uHover;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
 `;
 
 const FRAGMENT_SHADER = /* glsl */ `
   varying vec2 vUv;
-  varying float vWave;
   uniform sampler2D uTexture;
   uniform float uTime;
   uniform float uHover;
@@ -75,28 +58,19 @@ const FRAGMENT_SHADER = /* glsl */ `
     vec2 toMouse = uv - uMouse;
     float dist = length(toMouse);
 
-    // Ripple UV displacement on hover
-    float wave = sin(dist * 28.0 - uTime * 6.0) * exp(-dist * 5.0) * 0.022 * uHover;
+    float wave = sin(dist * 26.0 - uTime * 5.5) * exp(-dist * 5.0) * 0.018 * uHover;
     vec2 displacedUv = uv + normalize(toMouse + vec2(0.0001)) * wave;
 
-    // Chromatic aberration shift (RGB split amplified by hover)
-    float shift = (0.003 + 0.016 * uHover * uAberration) * (1.0 + sin(uTime * 2.0 + uSeed) * 0.25);
+    float shift = 0.012 * uHover * uAberration;
     vec2 dir = normalize(toMouse + vec2(0.001));
 
     float r = texture2D(uTexture, clamp(displacedUv + dir * shift, 0.0, 1.0)).r;
     float g = texture2D(uTexture, clamp(displacedUv, 0.0, 1.0)).g;
     float b = texture2D(uTexture, clamp(displacedUv - dir * shift, 0.0, 1.0)).b;
 
-    vec3 color = vec3(r, g, b);
-
-    // Subtle darkroom amber safelight rim near cursor
-    float spot = exp(-dist * 4.2) * uHover;
-    vec3 amber = vec3(1.0, 0.623, 0.11);
-    color = mix(color, color + amber * 0.28, spot);
-
-    // Fine silver grain shimmer
-    float grain = fract(sin(dot(uv * (uTime * 0.05 + uSeed), vec2(12.9898, 78.233))) * 43758.5453);
-    color += (grain - 0.5) * 0.045;
+    float lum = dot(vec3(r, g, b), vec3(0.299, 0.587, 0.114));
+    vec3 mono = vec3(lum);
+    vec3 color = mix(mono, vec3(r, g, b), uHover * 0.65);
 
     gl_FragColor = vec4(color, 1.0);
   }
@@ -121,6 +95,7 @@ function ShaderPhotoPlane({
   useEffect(() => {
     let active = true;
     const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
     loader.load(
       src,
       (loaded) => {
@@ -131,9 +106,7 @@ function ShaderPhotoPlane({
         setTexture(loaded);
       },
       undefined,
-      () => {
-        // Fallback procedural data texture if SVG fails
-      }
+      () => {}
     );
     return () => {
       active = false;
@@ -171,7 +144,7 @@ function ShaderPhotoPlane({
 
   return (
     <mesh ref={meshRef}>
-      <planeGeometry args={[2.3, 2.85, 32, 32]} />
+      <planeGeometry args={[2.3, 2.85, 28, 28]} />
       <shaderMaterial
         vertexShader={VERTEX_SHADER}
         fragmentShader={FRAGMENT_SHADER}
@@ -203,19 +176,18 @@ function PhotoCard({
   };
 
   return (
-    <article className="group relative flex flex-col border border-darkroom-border bg-[#0D0D0D] p-3 transition-all duration-300 hover:border-darkroom-amber/80 hover:shadow-[0_0_32px_rgba(255,159,28,0.14)]">
-      {/* Top negative frame header */}
-      <div className="mb-2 flex items-center justify-between font-mono text-[10px] tracking-widest text-darkroom-muted">
-        <span className="text-darkroom-amber font-semibold">FRAME // {photo.frame}</span>
-        <span>{photo.id}</span>
-        <span>ISO {photo.exif.iso}</span>
+    <article className="group flex flex-col rounded-md border border-neutral-800 bg-[#0E0E0E] p-3.5 transition hover:border-neutral-600">
+      <div className="mb-2.5 flex items-center justify-between font-mono text-[11px] text-neutral-500">
+        <span>Frame {photo.frame}</span>
+        <span>
+          ISO {photo.exif.iso} · {photo.exif.aperture}
+        </span>
       </div>
 
-      {/* Interactive WebGL Shader Viewport + Fallback Image Layer */}
       <div
         role="button"
         tabIndex={0}
-        aria-label={`Inspect ${photo.title} in fullscreen darkroom loupe`}
+        aria-label={`Inspect ${photo.title}`}
         onClick={() => {
           soundEngine.playShutter();
           onSelect(photo);
@@ -223,7 +195,6 @@ function PhotoCard({
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            soundEngine.playShutter();
             onSelect(photo);
           }
         }}
@@ -233,19 +204,17 @@ function PhotoCard({
         }}
         onMouseLeave={() => setHovered(false)}
         onMouseMove={handlePointerMove}
-        className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden border border-darkroom-border/80 bg-[#050505]"
+        className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded border border-neutral-800 bg-black"
       >
-        {/* Base Optimized Image (always present for instant paint, SEO, and fallback) */}
         <img
           src={photo.src}
           alt={photo.title}
           loading="lazy"
-          className={`h-full w-full object-cover transition-transform duration-700 ${
-            hovered ? "scale-105" : "scale-100"
+          className={`h-full w-full object-cover grayscale transition-transform duration-700 ${
+            hovered ? "scale-[1.03]" : "scale-100"
           }`}
         />
 
-        {/* WebGL GLSL Shader Canvas Overlay */}
         {webglEnabled && (
           <div className="pointer-events-none absolute inset-0">
             <Canvas
@@ -264,30 +233,26 @@ function PhotoCard({
           </div>
         )}
 
-        {/* Hover EXIF & Shader Telemetry Badge */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 font-mono text-[10px]">
-          <span className="text-darkroom-amber">
-            {hovered ? "GLSL // RIPPLE + RGB SHIFT ACTIVE" : `${photo.exif.aperture} · ${photo.exif.shutter}`}
-          </span>
-          <span className="inline-flex items-center gap-1 border border-darkroom-amber/40 bg-black/70 px-2 py-0.5 text-darkroom-silver group-hover:border-darkroom-amber group-hover:text-darkroom-amber">
-            <Maximize2 className="h-2.5 w-2.5" />
-            <span>EXIF LOUPE</span>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 font-mono text-[11px]">
+          <span className="text-neutral-300">{photo.exif.shutter}</span>
+          <span className="inline-flex items-center gap-1 rounded bg-black/70 px-2 py-0.5 text-neutral-300 group-hover:text-white">
+            <Maximize2 className="h-3 w-3" />
+            <span>Inspect</span>
           </span>
         </div>
       </div>
 
-      {/* Caption & Camera Footer */}
       <div className="mt-3 flex flex-1 flex-col justify-between">
         <div>
-          <h3 className="font-display text-base font-bold tracking-wide text-white group-hover:text-darkroom-amber">
+          <h3 className="font-display text-base font-medium text-white">
             {photo.title}
           </h3>
-          <p className="mt-1 line-clamp-2 font-mono text-[11px] leading-relaxed text-darkroom-muted">
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-400">
             {photo.caption}
           </p>
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t border-darkroom-border/60 pt-2 font-mono text-[10px] text-darkroom-muted">
+        <div className="mt-3 flex items-center justify-between border-t border-neutral-800/80 pt-2 font-mono text-[11px] text-neutral-500">
           <span className="truncate max-w-[75%]">{photo.camera.split("·")[0]}</span>
           <span>{photo.date}</span>
         </div>
@@ -300,10 +265,9 @@ export function WebGLGallery() {
   const { reducedMotion, shuffleKey, triggerShuffle } = useDarkroom();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoRecord | null>(null);
   const [webglEnabled, setWebglEnabled] = useState(true);
-  const [aberrationStrength, setAberrationStrength] = useState(1.2);
+  const [aberrationStrength, setAberrationStrength] = useState(1.0);
 
   useEffect(() => {
-    // Respect reduced motion or low-power mobile devices automatically
     const isLowPower =
       reducedMotion ||
       (typeof navigator !== "undefined" &&
@@ -314,7 +278,6 @@ export function WebGLGallery() {
     }
   }, [reducedMotion]);
 
-  // Close modal on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedPhoto(null);
@@ -326,11 +289,10 @@ export function WebGLGallery() {
   const orderedPhotos = useMemo(() => {
     const list = [...(photosData as PhotoRecord[])];
     if (shuffleKey === 0) return list;
-    // Deterministic shuffle based on shuffleKey
     return list.sort((a, b) => {
       const hashA = Math.sin(a.seed * (shuffleKey + 1)) * 1000;
       const hashB = Math.sin(b.seed * (shuffleKey + 1)) * 1000;
-      return (hashA - Math.floor(hashA)) - (hashB - Math.floor(hashB));
+      return hashA - Math.floor(hashA) - (hashB - Math.floor(hashB));
     });
   }, [shuffleKey]);
 
@@ -338,33 +300,28 @@ export function WebGLGallery() {
     <section
       id="webgl-gallery"
       aria-labelledby="gallery-heading"
-      className="relative border-t border-darkroom-border bg-[#0A0A0A] py-24 px-4 sm:px-8"
+      className="border-t border-neutral-900 bg-[#0A0A0A] py-24 px-4 sm:px-8"
     >
-      <div className="mx-auto max-w-7xl">
-        {/* Section Header & Shader Controls */}
-        <div className="mb-12 flex flex-col justify-between gap-6 border-b border-darkroom-border pb-6 lg:flex-row lg:items-end">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 flex flex-col justify-between gap-6 border-b border-neutral-800 pb-6 lg:flex-row lg:items-end">
           <div>
-            <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-darkroom-amber">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>02 // ARCHIVAL SILVER GELATIN PLATES (WEBGL GLSL GALLERY)</span>
-            </div>
+            <p className="font-mono text-xs text-amber-500">01 / Photography & Shaders</p>
             <h2
               id="gallery-heading"
-              className="mt-2 font-display text-3xl font-bold tracking-tight text-white sm:text-5xl"
+              className="mt-1 font-display text-2xl font-semibold tracking-tight text-white sm:text-4xl"
             >
-              ABSTRACT OPTICS & SHADER PLATES
+              Monochrome Film Archive (WebGL2)
             </h2>
-            <p className="mt-2 max-w-2xl font-mono text-xs leading-relaxed text-darkroom-muted">
-              Hover any negative plate to excite the custom GLSL displacement & chromatic aberration shader. Click a plate to open the fullscreen darkroom loupe and inspect full EXIF chemical telemetry.
+            <p className="mt-2 max-w-2xl text-sm text-neutral-400">
+              Medium-format and 35mm black-and-white studies rendered through a custom GLSL displacement and chromatic dispersion shader.
             </p>
           </div>
 
-          {/* Interactive Shader & Shuffle Controls */}
-          <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-            <div className="flex items-center gap-2 border border-darkroom-border bg-darkroom-surface px-3 py-1.5">
-              <Sliders className="h-3.5 w-3.5 text-darkroom-amber" />
-              <label htmlFor="aberration-slider" className="text-[11px] text-darkroom-muted">
-                DISPERSION:
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+            <div className="flex items-center gap-2 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5">
+              <Sliders className="h-3.5 w-3.5 text-neutral-400" />
+              <label htmlFor="aberration-slider" className="text-[11px] text-neutral-400">
+                Dispersion
               </label>
               <input
                 id="aberration-slider"
@@ -374,38 +331,30 @@ export function WebGLGallery() {
                 step="0.1"
                 value={aberrationStrength}
                 onChange={(e) => setAberrationStrength(parseFloat(e.target.value))}
-                className="w-20 accent-darkroom-amber cursor-pointer"
+                className="w-20 accent-amber-500 cursor-pointer"
               />
             </div>
 
             <button
               type="button"
               onClick={triggerShuffle}
-              className="inline-flex items-center gap-1.5 border border-darkroom-border bg-darkroom-surface px-3 py-1.5 text-xs text-darkroom-silver transition hover:border-darkroom-amber hover:text-darkroom-amber"
+              className="inline-flex items-center gap-1.5 rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-neutral-300 transition hover:border-neutral-700 hover:text-white"
             >
-              <Shuffle className="h-3.5 w-3.5 text-darkroom-amber" />
-              <span>Shuffle Plates</span>
+              <Shuffle className="h-3.5 w-3.5" />
+              <span>Shuffle</span>
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                soundEngine.playShutter();
-                setWebglEnabled((prev) => !prev);
-              }}
+              onClick={() => setWebglEnabled((prev) => !prev)}
               aria-pressed={webglEnabled}
-              className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs transition ${
-                webglEnabled
-                  ? "border-darkroom-amber/70 bg-darkroom-amber/15 text-darkroom-amber"
-                  : "border-darkroom-border bg-darkroom-surface text-darkroom-muted"
-              }`}
+              className="rounded border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-neutral-300 transition hover:border-neutral-700"
             >
-              <span>{webglEnabled ? "GLSL SHADERS: ON" : "GLSL SHADERS: ECO"}</span>
+              {webglEnabled ? "WebGL: On" : "WebGL: Off"}
             </button>
           </div>
         </div>
 
-        {/* 6-Plate Responsive Contact Grid */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {orderedPhotos.map((photo) => (
             <PhotoCard
@@ -419,54 +368,43 @@ export function WebGLGallery() {
         </div>
       </div>
 
-      {/* Fullscreen EXIF Lightbox Modal */}
+      {/* Lightbox Modal */}
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md sm:p-8"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm sm:p-8"
             onClick={() => setSelectedPhoto(null)}
             role="dialog"
             aria-modal="true"
             aria-labelledby="lightbox-title"
           >
             <motion.div
-              initial={{ scale: 0.94, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              transition={{ type: "spring", damping: 24, stiffness: 280 }}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative grid max-h-[90vh] w-full max-w-5xl grid-cols-1 overflow-y-auto border border-darkroom-amber/60 bg-[#0C0C0C] shadow-[0_0_70px_rgba(255,159,28,0.2)] lg:grid-cols-12"
+              className="grid max-h-[90vh] w-full max-w-4xl grid-cols-1 overflow-y-auto rounded-md border border-neutral-800 bg-[#0E0E0E] lg:grid-cols-12"
             >
-              {/* Left 7 Cols: High-Contrast Plate Inspection */}
-              <div className="relative flex items-center justify-center border-b border-darkroom-border bg-[#050505] p-6 lg:col-span-7 lg:border-b-0 lg:border-r">
+              <div className="flex items-center justify-center bg-black p-6 lg:col-span-7">
                 <img
                   src={selectedPhoto.src}
                   alt={selectedPhoto.title}
-                  className="max-h-[72vh] w-auto object-contain border border-darkroom-border"
+                  className="max-h-[70vh] w-auto rounded object-contain grayscale"
                 />
-                <div className="absolute top-3 left-3 bg-black/80 px-2.5 py-1 font-mono text-[10px] tracking-widest text-darkroom-amber">
-                  LOUPE MAGNIFICATION // 4.0x OPTICAL
-                </div>
               </div>
 
-              {/* Right 5 Cols: EXIF Metadata & Darkroom Concept Panel */}
               <div className="flex flex-col justify-between p-6 lg:col-span-5">
                 <div>
-                  <div className="flex items-center justify-between border-b border-darkroom-border pb-3">
-                    <span className="font-mono text-xs text-darkroom-amber">
-                      NEGATIVE ID // {selectedPhoto.id} (FRAME {selectedPhoto.frame})
-                    </span>
+                  <div className="flex items-center justify-between border-b border-neutral-800 pb-3 font-mono text-xs text-neutral-400">
+                    <span>Frame {selectedPhoto.frame}</span>
                     <button
                       type="button"
-                      onClick={() => {
-                        soundEngine.playShutter();
-                        setSelectedPhoto(null);
-                      }}
-                      aria-label="Close EXIF inspection modal"
-                      className="border border-darkroom-border p-1.5 text-darkroom-muted transition hover:border-darkroom-amber hover:text-darkroom-amber"
+                      onClick={() => setSelectedPhoto(null)}
+                      aria-label="Close"
+                      className="rounded border border-neutral-800 p-1 text-neutral-400 hover:text-white"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -474,74 +412,47 @@ export function WebGLGallery() {
 
                   <h3
                     id="lightbox-title"
-                    className="mt-4 font-display text-2xl font-bold text-white"
+                    className="mt-4 font-display text-xl font-semibold text-white"
                   >
                     {selectedPhoto.title}
                   </h3>
 
-                  <div className="mt-4 space-y-2 border border-darkroom-border bg-black/50 p-3.5 font-mono text-xs">
-                    <div className="flex items-center gap-2 text-darkroom-silver">
-                      <Camera className="h-3.5 w-3.5 text-darkroom-amber shrink-0" />
-                      <span>{selectedPhoto.camera}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-darkroom-muted">
-                      <Calendar className="h-3.5 w-3.5 text-darkroom-amber shrink-0" />
-                      <span>EXPOSED ON: {selectedPhoto.date}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-darkroom-muted">
-                      <Aperture className="h-3.5 w-3.5 text-darkroom-amber shrink-0" />
-                      <span>DEVELOPER: {selectedPhoto.exif.developer}</span>
-                    </div>
-                  </div>
+                  <p className="mt-2 text-xs leading-relaxed text-neutral-400">
+                    {selectedPhoto.caption}
+                  </p>
 
-                  {/* 4-Cell EXIF Telemetry Matrix */}
-                  <div className="mt-4 grid grid-cols-3 gap-2 font-mono text-xs">
-                    <div className="border border-darkroom-border bg-darkroom-surface p-2.5">
-                      <span className="block text-[10px] text-darkroom-muted">ISO RATING</span>
-                      <strong className="text-darkroom-amber">{selectedPhoto.exif.iso}</strong>
+                  <dl className="mt-5 space-y-2 border-t border-neutral-800 pt-4 font-mono text-xs">
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Camera & Film</dt>
+                      <dd className="text-right text-neutral-200">
+                        {selectedPhoto.camera.split("·")[0]}
+                      </dd>
                     </div>
-                    <div className="border border-darkroom-border bg-darkroom-surface p-2.5">
-                      <span className="block text-[10px] text-darkroom-muted">APERTURE</span>
-                      <strong className="text-darkroom-amber">{selectedPhoto.exif.aperture}</strong>
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Exposure</dt>
+                      <dd className="text-neutral-200">
+                        ISO {selectedPhoto.exif.iso} · {selectedPhoto.exif.aperture} ·{" "}
+                        {selectedPhoto.exif.shutter}
+                      </dd>
                     </div>
-                    <div className="border border-darkroom-border bg-darkroom-surface p-2.5">
-                      <span className="block text-[10px] text-darkroom-muted">SHUTTER</span>
-                      <strong className="text-darkroom-amber">{selectedPhoto.exif.shutter}</strong>
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Developer</dt>
+                      <dd className="text-neutral-200">{selectedPhoto.exif.developer}</dd>
                     </div>
-                  </div>
-
-                  {/* Concept Note */}
-                  <div className="mt-5">
-                    <h4 className="font-mono text-[11px] uppercase tracking-widest text-darkroom-amber">
-                      DARKROOM CONCEPT NOTE //
-                    </h4>
-                    <p className="mt-2 font-mono text-xs leading-relaxed text-darkroom-silver/90">
-                      {selectedPhoto.caption}
-                    </p>
-                  </div>
+                    <div className="flex justify-between">
+                      <dt className="text-neutral-500">Date</dt>
+                      <dd className="text-neutral-200">{selectedPhoto.date}</dd>
+                    </div>
+                  </dl>
                 </div>
 
-                {/* Spectral Swatches & Close Action */}
-                <div className="mt-6 border-t border-darkroom-border pt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-[10px] text-darkroom-muted">TONAL SWATCH:</span>
-                    {selectedPhoto.palette.map((hex) => (
-                      <span
-                        key={hex}
-                        className="h-4 w-4 border border-white/20"
-                        style={{ backgroundColor: hex }}
-                        title={hex}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPhoto(null)}
-                    className="border border-darkroom-amber bg-darkroom-amber px-4 py-1.5 font-mono text-xs font-semibold uppercase text-black transition hover:bg-white"
-                  >
-                    Close Loupe [ESC]
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhoto(null)}
+                  className="mt-6 w-full rounded bg-white py-2 font-mono text-xs font-medium text-black hover:bg-neutral-200"
+                >
+                  Close (Esc)
+                </button>
               </div>
             </motion.div>
           </motion.div>

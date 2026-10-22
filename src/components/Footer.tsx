@@ -1,22 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Github, Linkedin, Mail, Terminal, Sparkles, ArrowUp } from "lucide-react";
+import { Github, Linkedin, Mail, Terminal, ArrowUp } from "lucide-react";
 import { PORTFOLIO_CONTENT } from "@/config/content";
 import { useDarkroom } from "@/context/DarkroomContext";
 import { soundEngine } from "@/utils/sound";
 
 export function Footer() {
-  const {
-    unlockSecret,
-    unlockedSecrets,
-    setTerminalOpen,
-    hireMeUnlocked,
-    timeGrade,
-  } = useDarkroom();
+  const { unlockSecret, unlockedSecrets, setTerminalOpen, hireMeUnlocked } =
+    useDarkroom();
   const footerRef = useRef<HTMLElement>(null);
 
-  // Trigger "darkroom-alchemist" secret when visitor reaches the footer colophon
   useEffect(() => {
     const el = footerRef.current;
     if (!el) return;
@@ -36,21 +30,19 @@ export function Footer() {
     <footer
       ref={footerRef}
       id="colophon-footer"
-      className="relative border-t border-darkroom-border bg-[#060606] pt-20 pb-24 px-4 sm:px-8 font-mono"
+      className="border-t border-neutral-900 bg-[#080808] py-20 px-4 sm:px-8 font-mono text-xs"
     >
-      <div className="mx-auto max-w-7xl">
-        {/* Secret Root Clearance Banner if unlocked via sudo hire-me */}
+      <div className="mx-auto max-w-6xl">
         {hireMeUnlocked && (
-          <div className="mb-10 border border-darkroom-amber bg-darkroom-amber/10 p-5 text-xs">
-            <div className="flex items-center gap-2 font-bold text-darkroom-amber">
-              <Sparkles className="h-4 w-4" />
-              <span>ROOT CLEARANCE ACTIVE // PRIORITY ENGINEERING CHANNEL UNLOCKED</span>
-            </div>
-            <p className="mt-1 text-darkroom-silver">
-              You unlocked the classified dossier via <code className="text-darkroom-amber">sudo hire-me</code>. Direct priority line:{" "}
+          <div className="mb-8 rounded border border-amber-500/50 bg-amber-500/10 p-4">
+            <p className="font-semibold text-amber-400">
+              Priority Channel Unlocked (sudo hire-me)
+            </p>
+            <p className="mt-1 text-neutral-300">
+              Direct contact:{" "}
               <a
-                href={`mailto:${PORTFOLIO_CONTENT.contact.email}?subject=Priority%20Role%20Inquiry`}
-                className="font-bold text-darkroom-amber underline"
+                href={`mailto:${PORTFOLIO_CONTENT.contact.email}`}
+                className="underline text-white"
               >
                 {PORTFOLIO_CONTENT.contact.email}
               </a>
@@ -58,94 +50,64 @@ export function Footer() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-10 border-b border-darkroom-border pb-12 lg:grid-cols-12">
-          {/* Left 7 Cols: Call to Action */}
-          <div className="lg:col-span-7 space-y-4">
-            <span className="text-xs uppercase tracking-widest text-darkroom-amber">
-              06 // END OF ROLL · ARCHIVAL FIXER COMPLETE
-            </span>
-            <h2 className="font-display text-3xl font-bold text-white sm:text-5xl">
-              LET&apos;S DEVELOP SOMETHING EXTRAORDINARY.
+        <div className="flex flex-col justify-between gap-8 border-b border-neutral-800 pb-10 md:flex-row md:items-center">
+          <div>
+            <h2 className="font-display text-2xl font-semibold text-white">
+              {PORTFOLIO_CONTENT.name}
             </h2>
-            <p className="max-w-xl text-xs leading-relaxed text-darkroom-muted">
-              {PORTFOLIO_CONTENT.availability}. Reach out directly via email, inspect my repositories on GitHub, or open the Darkroom CLI terminal.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3 pt-2 text-xs">
-              <a
-                href={`mailto:${PORTFOLIO_CONTENT.contact.email}`}
-                onClick={() => soundEngine.playShutter()}
-                className="inline-flex items-center gap-2 border border-darkroom-amber bg-darkroom-amber px-5 py-2.5 font-semibold uppercase tracking-wider text-black transition hover:bg-white"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                <span>{PORTFOLIO_CONTENT.contact.email}</span>
-              </a>
-
-              <a
-                href={PORTFOLIO_CONTENT.contact.github}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 border border-darkroom-border bg-darkroom-surface px-4 py-2.5 text-darkroom-silver hover:border-darkroom-amber hover:text-darkroom-amber"
-              >
-                <Github className="h-3.5 w-3.5" />
-                <span>GitHub</span>
-              </a>
-
-              <a
-                href={PORTFOLIO_CONTENT.contact.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 border border-darkroom-border bg-darkroom-surface px-4 py-2.5 text-darkroom-silver hover:border-darkroom-amber hover:text-darkroom-amber"
-              >
-                <Linkedin className="h-3.5 w-3.5" />
-                <span>LinkedIn</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={() => {
-                  soundEngine.playShutter();
-                  setTerminalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 border border-darkroom-border bg-black px-4 py-2.5 text-darkroom-muted hover:border-darkroom-amber hover:text-darkroom-amber"
-              >
-                <Terminal className="h-3.5 w-3.5" />
-                <span>Terminal</span>
-              </button>
-            </div>
+            <p className="mt-1 text-neutral-400">{PORTFOLIO_CONTENT.availability}</p>
           </div>
 
-          {/* Right 5 Cols: Darkroom Colophon & Secrets Telemetry */}
-          <div className="lg:col-span-5 flex flex-col justify-between border border-darkroom-border bg-[#0B0B0B] p-5 text-xs">
-            <div className="space-y-2">
-              <div className="flex justify-between border-b border-darkroom-border pb-2 text-[11px] text-darkroom-amber">
-                <span>DARKROOM COLOPHON</span>
-                <span>{timeGrade.kelvin}</span>
-              </div>
-              <p className="text-darkroom-muted leading-relaxed">
-                Built with Next.js App Router, TypeScript, Tailwind CSS, React Three Fiber + Custom GLSL Shaders, GSAP ScrollTrigger + Lenis, Framer Motion, and Howler.js.
-              </p>
-              <p className="text-darkroom-silver pt-1">
-                Secrets Discovered:{" "}
-                <strong className="text-darkroom-amber">
-                  {unlockedSecrets.length} / {PORTFOLIO_CONTENT.secrets.length}
-                </strong>{" "}
-                (saved in localStorage)
-              </p>
-            </div>
-
-            <div className="mt-6 flex items-center justify-between border-t border-darkroom-border pt-3 text-[11px] text-darkroom-muted">
-              <span>© {new Date().getFullYear()} {PORTFOLIO_CONTENT.name}</span>
-              <a
-                href="#develop-intro"
-                onClick={() => soundEngine.playShutter()}
-                className="inline-flex items-center gap-1 text-darkroom-amber hover:underline"
-              >
-                <span>Rewind Roll</span>
-                <ArrowUp className="h-3 w-3" />
-              </a>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={`mailto:${PORTFOLIO_CONTENT.contact.email}`}
+              className="inline-flex items-center gap-2 rounded bg-white px-4 py-2 font-medium text-black hover:bg-neutral-200"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              <span>{PORTFOLIO_CONTENT.contact.email}</span>
+            </a>
+            <a
+              href={PORTFOLIO_CONTENT.contact.github}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded border border-neutral-800 bg-neutral-900 px-3.5 py-2 text-neutral-300 hover:border-neutral-700 hover:text-white"
+            >
+              <Github className="h-3.5 w-3.5" />
+              <span>GitHub</span>
+            </a>
+            <a
+              href={PORTFOLIO_CONTENT.contact.linkedin}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 rounded border border-neutral-800 bg-neutral-900 px-3.5 py-2 text-neutral-300 hover:border-neutral-700 hover:text-white"
+            >
+              <Linkedin className="h-3.5 w-3.5" />
+              <span>LinkedIn</span>
+            </a>
+            <button
+              type="button"
+              onClick={() => setTerminalOpen(true)}
+              className="inline-flex items-center gap-2 rounded border border-neutral-800 bg-neutral-900 px-3.5 py-2 text-neutral-300 hover:border-neutral-700 hover:text-white"
+            >
+              <Terminal className="h-3.5 w-3.5" />
+              <span>CLI</span>
+            </button>
           </div>
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 text-neutral-500">
+          <span>
+            Built with Next.js, TypeScript, WebGL2 & PyTorch/ONNX · Easter eggs:{" "}
+            {unlockedSecrets.length}/{PORTFOLIO_CONTENT.secrets.length}
+          </span>
+          <a
+            href="#develop-intro"
+            onClick={() => soundEngine.playShutter()}
+            className="inline-flex items-center gap-1 text-neutral-400 hover:text-white"
+          >
+            <span>Back to top</span>
+            <ArrowUp className="h-3.5 w-3.5" />
+          </a>
         </div>
       </div>
     </footer>
