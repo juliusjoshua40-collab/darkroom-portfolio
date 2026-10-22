@@ -30,6 +30,18 @@ Speak with concise, insightful creative-engineering precision and occasional dar
 function generateLocalDarkroomReply(question: string): string {
   const q = question.toLowerCase();
 
+  if (
+    q.includes("deep learning") ||
+    q.includes("neural") ||
+    q.includes("ai") ||
+    q.includes("pytorch") ||
+    q.includes("diffusion") ||
+    q.includes("vit") ||
+    q.includes("ml")
+  ) {
+    return `${PORTFOLIO_CONTENT.name} integrates **Deep Learning & Computer Vision** directly into the darkroom workflow:\n• **LATENT-HALIDE**: Conditional U-Net + Vision Transformer trained in PyTorch on 18k drum scans, running client-side via ONNX Runtime WebGPU.\n• **SAFELIGHT**: Fine-tuned CLIP ViT-B/32 multi-modal embeddings for semantic negative search.\n• **Interactive Neural Lab**: Check section **04.NEURAL** on this page to test live Conv2D Sobel kernels, ViT self-attention saliency maps, and latent diffusion denoising schedules!`;
+  }
+
   if (q.includes("project") || q.includes("built") || q.includes("work") || q.includes("halide")) {
     const top = PORTFOLIO_CONTENT.projects
       .slice(0, 3)

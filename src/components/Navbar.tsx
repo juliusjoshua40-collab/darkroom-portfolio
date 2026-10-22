@@ -128,18 +128,25 @@ export function Navbar() {
               03.SHEETS
             </a>
             <a
+              href="#neural-darkroom"
+              onMouseEnter={() => soundEngine.playHover()}
+              className="transition-colors hover:text-darkroom-amber"
+            >
+              04.NEURAL
+            </a>
+            <a
               href="#light-playground"
               onMouseEnter={() => soundEngine.playHover()}
               className="transition-colors hover:text-darkroom-amber"
             >
-              04.LAB
+              05.LAB
             </a>
             <a
               href="#live-telemetry"
               onMouseEnter={() => soundEngine.playHover()}
               className="transition-colors hover:text-darkroom-amber"
             >
-              05.SIGNAL
+              06.SIGNAL
             </a>
           </nav>
         )}

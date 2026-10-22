@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { DevelopIntro } from "@/components/DevelopIntro";
 import { WebGLGallery } from "@/components/WebGLGallery";
 import { ContactSheetProjects } from "@/components/ContactSheetProjects";
+import { DeepLearningLab } from "@/components/DeepLearningLab";
 import { ApertureCursor } from "@/components/ApertureCursor";
 import { TerminalModal } from "@/components/TerminalModal";
 import { GenerativePlayground } from "@/components/GenerativePlayground";
@@ -45,6 +46,7 @@ export default function HomePage() {
           <DevelopIntro />
           <WebGLGallery />
           <ContactSheetProjects />
+          <DeepLearningLab />
           <GenerativePlayground />
           <LiveWidgets />
           <Footer />

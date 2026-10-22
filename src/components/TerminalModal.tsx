@@ -19,6 +19,7 @@ const AVAILABLE_COMMANDS = [
   "help",
   "about",
   "projects",
+  "neural",
   "gallery",
   "expose",
   "develop",
@@ -145,6 +146,9 @@ export function TerminalModal() {
                 <span className="text-darkroom-amber">projects</span> — List contact-sheet case studies
               </div>
               <div>
+                <span className="text-darkroom-amber">neural</span> — Inspect Deep Learning & ViT/Diffusion stack
+              </div>
+              <div>
                 <span className="text-darkroom-amber">gallery</span> — List archival photo plates
               </div>
               <div>
@@ -203,6 +207,26 @@ export function TerminalModal() {
                   <div className="text-darkroom-muted text-xs">{p.oneLiner}</div>
                 </div>
               ))}
+            </div>
+          );
+          break;
+
+        case "neural":
+        case "dl":
+          responseNode = (
+            <div className="space-y-1.5 text-xs">
+              <p className="text-darkroom-amber font-bold">
+                NEURAL DARKROOM // DEEP LEARNING & COMPUTER VISION PIPELINE
+              </p>
+              <p className="text-darkroom-silver">
+                • Models: Vision Transformer (ViT-B/16), Conditional U-Net Latent Diffusion, CLIP ViT-B/32, SIREN Neural SDFs
+              </p>
+              <p className="text-darkroom-silver">
+                • Runtime: PyTorch training → ONNX Runtime Web / WebGPU FP16 & INT8 client-side execution
+              </p>
+              <p className="text-darkroom-muted">
+                Scroll to section 04.NEURAL to test live Conv2D Sobel kernels, ViT self-attention heatmaps, and diffusion schedules on darkroom negatives.
+              </p>
             </div>
           );
           break;
