@@ -10,94 +10,100 @@ export interface GitHubActivityItem {
   url: string;
 }
 
-const MOCK_ACTIVITY: GitHubActivityItem[] = [
+const FALLBACK_ACTIVITY: GitHubActivityItem[] = [
   {
     id: "gh-101",
     type: "PushEvent",
-    repo: "halide-webgl-lab",
-    message: "feat(shaders): add Voronoi silver-halide grain clustering pass in GLSL",
+    repo: "juliusjoshua40-collab/darkroom-portfolio",
+    message:
+      "refactor: redesign UI for authentic developer craft and add live SIREN MLP trainer + UMAP embedding explorer",
     branch: "main",
-    timestamp: "3h ago",
-    url: "https://github.com",
+    timestamp: "Today",
+    url: "https://github.com/juliusjoshua40-collab/darkroom-portfolio",
   },
   {
     id: "gh-102",
-    type: "PullRequestEvent",
-    repo: "chronograph-dsp",
-    message: "perf(worklet): zero-allocation ring buffer for 250k Lissajous vertices",
-    branch: "feat/wasm-fft",
-    timestamp: "1d ago",
-    url: "https://github.com",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/darkroom-portfolio",
+    message:
+      "feat: add interactive Deep Learning & Computer Vision Lab (ViT, Conv2D, Latent Diffusion)",
+    branch: "main",
+    timestamp: "Today",
+    url: "https://github.com/juliusjoshua40-collab/darkroom-portfolio",
   },
   {
     id: "gh-103",
     type: "PushEvent",
-    repo: "obscura-crdt",
-    message: "fix(canvas): spatial-hash culling for 1,000+ high-res film plates",
+    repo: "juliusjoshua40-collab/SonicFlow",
+    message: "feat: audio DSP pipeline and real-time reactive visualizer",
     branch: "main",
-    timestamp: "2d ago",
-    url: "https://github.com",
+    timestamp: "Recent",
+    url: "https://github.com/juliusjoshua40-collab/SonicFlow",
   },
   {
     id: "gh-104",
-    type: "ReleaseEvent",
-    repo: "caustic-sdf-studio",
-    message: "release: v2.4.0 — Beer-Lambert chromatic dispersion node compiler",
-    branch: "tag/v2.4.0",
-    timestamp: "4d ago",
-    url: "https://github.com",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/lagoslife",
+    message: "perf: optimize interactive state and viewport rendering",
+    branch: "main",
+    timestamp: "Recent",
+    url: "https://github.com/juliusjoshua40-collab/lagoslife",
   },
 ];
 
 export async function GET() {
-  const username = process.env.GITHUB_USERNAME;
+  const rawUser = process.env.GITHUB_USERNAME;
+  const username =
+    !rawUser || rawUser === "your-github-username"
+      ? "juliusjoshua40-collab"
+      : rawUser;
   const token = process.env.GITHUB_TOKEN;
-
-  if (!username || username === "your-github-username") {
-    return NextResponse.json({
-      source: "mock-darkroom-telemetry",
-      items: MOCK_ACTIVITY,
-    });
-  }
 
   try {
     const headers: Record<string, string> = {
       Accept: "application/vnd.github+json",
+      "User-Agent": "JuliusJoshua-Portfolio",
     };
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const res = await fetch(`https://api.github.com/users/${username}/events/public?per_page=5`, {
-      headers,
-      next: { revalidate: 300 },
-    });
+    const res = await fetch(
+      `https://api.github.com/users/${username}/events/public?per_page=8`,
+      {
+        headers,
+        next: { revalidate: 180 },
+      }
+    );
 
     if (!res.ok) {
       return NextResponse.json({
-        source: "mock-fallback",
-        items: MOCK_ACTIVITY,
+        source: "fallback",
+        items: FALLBACK_ACTIVITY,
       });
     }
 
     const raw = await res.json();
     if (!Array.isArray(raw) || raw.length === 0) {
       return NextResponse.json({
-        source: "mock-fallback",
-        items: MOCK_ACTIVITY,
+        source: "fallback",
+        items: FALLBACK_ACTIVITY,
       });
     }
 
-    const items: GitHubActivityItem[] = raw.slice(0, 4).map((ev: any, idx: number) => ({
+    const items: GitHubActivityItem[] = raw.slice(0, 5).map((ev: any, idx: number) => ({
       id: String(ev.id || idx),
       type: ev.type || "PushEvent",
-      repo: ev.repo?.name || `${username}/darkroom-repo`,
+      repo: ev.repo?.name || `${username}/darkroom-portfolio`,
       message:
         ev.payload?.commits?.[0]?.message ||
         ev.payload?.pull_request?.title ||
-        `Updated ${ev.repo?.name || "repository"}`,
+        `Activity (${ev.type || "Update"}) on ${ev.repo?.name || "repository"}`,
       branch: (ev.payload?.ref || "refs/heads/main").replace("refs/heads/", ""),
-      timestamp: new Date(ev.created_at || Date.now()).toLocaleDateString(),
+      timestamp: new Date(ev.created_at || Date.now()).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
       url: `https://github.com/${ev.repo?.name || username}`,
     }));
 
@@ -107,8 +113,8 @@ export async function GET() {
     });
   } catch {
     return NextResponse.json({
-      source: "mock-fallback",
-      items: MOCK_ACTIVITY,
+      source: "fallback",
+      items: FALLBACK_ACTIVITY,
     });
   }
 }

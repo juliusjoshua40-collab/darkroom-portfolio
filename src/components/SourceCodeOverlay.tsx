@@ -4,22 +4,54 @@ import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Code2, Copy, Check, X, FileCode } from "lucide-react";
 import { useDarkroom } from "@/context/DarkroomContext";
-import { PORTFOLIO_CONTENT } from "@/config/content";
 import { soundEngine } from "@/utils/sound";
 
 const SOURCE_FILES: { filename: string; lang: string; code: string }[] = [
   {
-    filename: "src/shaders/darkroomPlate.glsl",
-    lang: "GLSL // WebGL2 Fragment & Vertex Shader",
-    code: `// ============================================================================
-// THE DARKROOM // CUSTOM GLSL CHROMATIC & CAUSTIC DISPLACEMENT SHADER
-// ============================================================================
-varying vec2 vUv;
+    filename: "src/components/DeepLearningLab.tsx",
+    lang: "TypeScript // Coordinate MLP Backpropagation & Bias-Corrected Adam",
+    code: `// Analytical Forward + Backward Pass with Adam Optimizer (β1=0.9, β2=0.999)
+let out = net.b2;
+for (let i = 0; i < H; i++) {
+  const z = freq * (W1[i * 2] * nx + W1[i * 2 + 1] * ny) + b1[i];
+  const a = activation === "siren" ? Math.sin(z) : (z > 0 ? z : 0.01 * z);
+  hiddenPre[i] = z;
+  hiddenAct[i] = a;
+  out += W2[i] * a;
+}
+
+const yHat = 1 / (1 + Math.exp(-out));
+const err = yHat - target[idx];
+const dOut = 2 * err * yHat * (1 - yHat);
+
+for (let i = 0; i < H; i++) {
+  dW2[i] += dOut * hiddenAct[i];
+  const dAct = activation === "siren" ? Math.cos(hiddenPre[i]) : (hiddenPre[i] > 0 ? 1.0 : 0.01);
+  const dH = dOut * W2[i] * dAct;
+  db1[i] += dH;
+  dW1[i * 2] += dH * freq * nx;
+  dW1[i * 2 + 1] += dH * freq * ny;
+}
+
+// Bias-corrected Adam parameter update
+net.t += 1;
+const bc1 = 1 - Math.pow(0.9, net.t);
+const bc2 = 1 - Math.pow(0.999, net.t);
+for (let i = 0; i < H; i++) {
+  const gW2 = dW2[i] * invN;
+  mW2[i] = 0.9 * mW2[i] + 0.1 * gW2;
+  vW2[i] = 0.999 * vW2[i] + 0.001 * gW2 * gW2;
+  W2[i] -= lr * (mW2[i] / bc1) / (Math.sqrt(vW2[i] / bc2) + 1e-8);
+}`,
+  },
+  {
+    filename: "src/components/WebGLGallery.tsx",
+    lang: "GLSL // On-Demand WebGL2 Chromatic Dispersion & Wave Shader",
+    code: `varying vec2 vUv;
 uniform sampler2D uTexture;
 uniform float uTime;
 uniform float uHover;
 uniform vec2 uMouse;
-uniform float uSeed;
 uniform float uAberration;
 
 void main() {
@@ -27,57 +59,36 @@ void main() {
   vec2 toMouse = uv - uMouse;
   float dist = length(toMouse);
 
-  // Radial ripple wave excited by pointer proximity
-  float wave = sin(dist * 28.0 - uTime * 6.0) * exp(-dist * 5.0) * 0.022 * uHover;
+  float wave = sin(dist * 26.0 - uTime * 5.5) * exp(-dist * 5.0) * 0.018 * uHover;
   vec2 displacedUv = uv + normalize(toMouse + vec2(0.0001)) * wave;
 
-  // Spectral RGB separation (chromatic aberration)
-  float shift = (0.003 + 0.016 * uHover * uAberration);
+  float shift = 0.012 * uHover * uAberration;
   vec2 dir = normalize(toMouse + vec2(0.001));
 
   float r = texture2D(uTexture, clamp(displacedUv + dir * shift, 0.0, 1.0)).r;
   float g = texture2D(uTexture, clamp(displacedUv, 0.0, 1.0)).g;
   float b = texture2D(uTexture, clamp(displacedUv - dir * shift, 0.0, 1.0)).b;
 
-  // 590nm Amber Safelight bloom around focal loupe
-  vec3 color = vec3(r, g, b);
-  float spot = exp(-dist * 4.2) * uHover;
-  color = mix(color, color + vec3(1.0, 0.623, 0.11) * 0.28, spot);
+  float lum = dot(vec3(r, g, b), vec3(0.299, 0.587, 0.114));
+  vec3 color = mix(vec3(lum), vec3(r, g, b), uHover * 0.65);
 
   gl_FragColor = vec4(color, 1.0);
 }`,
   },
   {
-    filename: "src/config/content.ts",
-    lang: "TypeScript // Portfolio Manifest",
-    code: `export const PORTFOLIO_CONTENT = ${JSON.stringify(
-      {
-        name: PORTFOLIO_CONTENT.name,
-        role: PORTFOLIO_CONTENT.role,
-        tagline: PORTFOLIO_CONTENT.tagline,
-        contact: PORTFOLIO_CONTENT.contact,
-        projectCount: PORTFOLIO_CONTENT.projects.length,
-        projects: PORTFOLIO_CONTENT.projects.map((p) => ({
-          id: p.id,
-          frame: p.frameNumber,
-          title: p.title,
-          stack: p.stack,
-        })),
-      },
-      null,
-      2
-    )};`,
-  },
-  {
-    filename: "src/context/DarkroomContext.tsx",
-    lang: "TypeScript // Time-of-Day & Chemical State Machine",
-    code: `// Automatic Time-of-Day Color Grading & Live LUT Pipeline
-function computeTimeOfDayGrade(date: Date): TimeOfDayGrade {
-  const hour = date.getHours();
-  if (hour >= 5 && hour < 9) return { period: "GOLDEN_HOUR", kelvin: "2700K WARM AMBER" };
-  if (hour >= 9 && hour < 17) return { period: "DAYLIGHT_LAB", kelvin: "4800K TUNGSTEN-DAY" };
-  if (hour >= 17 && hour < 21) return { period: "TWILIGHT_BATH", kelvin: "2200K SODIUM VAPOR" };
-  return { period: "MIDNIGHT_SAFELIGHT", kelvin: "1850K AMBER SAFELIGHT" };
+    filename: "src/app/api/github/route.ts",
+    lang: "TypeScript // Next.js Route Handler for Live GitHub Events",
+    code: `export async function GET() {
+  const username = process.env.GITHUB_USERNAME || "juliusjoshua40-collab";
+  const res = await fetch(
+    \`https://api.github.com/users/\${username}/events/public?per_page=8\`,
+    {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "JuliusJoshua-Portfolio" },
+      next: { revalidate: 180 },
+    }
+  );
+  const raw = await res.json();
+  return NextResponse.json({ source: "github-live", items: raw.slice(0, 5) });
 }`,
   },
 ];
@@ -87,11 +98,11 @@ function highlightLine(line: string): React.ReactNode {
     return <span className="text-emerald-400/80">{line}</span>;
   }
   const keywordRegex =
-    /\b(export|const|function|return|if|uniform|varying|void|vec2|vec3|vec4|float|sampler2D)\b/g;
+    /\b(export|async|await|const|let|for|function|return|if|uniform|varying|void|vec2|vec3|vec4|float|sampler2D)\b/g;
   const parts = line.split(keywordRegex);
   return parts.map((part, i) =>
     keywordRegex.test(part) ? (
-      <span key={i} className="text-darkroom-amber font-semibold">
+      <span key={i} className="text-amber-400 font-semibold">
         {part}
       </span>
     ) : (
@@ -118,45 +129,45 @@ export function SourceCodeOverlay() {
     <AnimatePresence>
       {sourceView && (
         <motion.div
-          initial={{ opacity: 0, rotateX: 8 }}
-          animate={{ opacity: 1, rotateX: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex flex-col bg-[#070707]/95 pt-16 backdrop-blur-md"
           role="dialog"
           aria-modal="true"
-          aria-label="Syntax-highlighted portfolio source code inspection"
+          aria-label="Source code inspection"
         >
           <div className="mx-auto flex h-full w-full max-w-6xl flex-col p-4 sm:p-6">
-            {/* Top Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border border-darkroom-amber/60 bg-[#101010] px-4 py-3 font-mono text-xs">
-              <div className="flex items-center gap-2 text-darkroom-amber">
-                <Code2 className="h-4 w-4" />
-                <span className="font-bold uppercase tracking-wider">
-                  RAW NEGATIVE SOURCE INSPECTION // SELF-REFLECTIVE ARCHITECTURE VIEW
-                </span>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-t-md border border-neutral-800 bg-[#101010] px-4 py-3 font-mono text-xs">
+              <div className="flex items-center gap-2 text-white">
+                <Code2 className="h-4 w-4 text-amber-500" />
+                <span className="font-medium">Source Code Inspector</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 border border-darkroom-border bg-black px-3 py-1 text-darkroom-silver hover:border-darkroom-amber hover:text-darkroom-amber"
+                  className="inline-flex items-center gap-1.5 rounded border border-neutral-800 bg-black px-3 py-1 text-neutral-300 hover:border-neutral-700 hover:text-white"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copied ? "Copied" : "Copy Buffer"}</span>
+                  {copied ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  <span>{copied ? "Copied" : "Copy"}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setSourceView(false)}
-                  className="inline-flex items-center gap-1 border border-darkroom-amber bg-darkroom-amber px-3 py-1 font-semibold text-black hover:bg-white"
+                  className="inline-flex items-center gap-1 rounded bg-white px-3 py-1 font-medium text-black hover:bg-neutral-200"
                 >
                   <X className="h-3.5 w-3.5" />
-                  <span>Exit Source View</span>
+                  <span>Close</span>
                 </button>
               </div>
             </div>
 
-            {/* File Tabs */}
             <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
               {SOURCE_FILES.map((file, idx) => (
                 <button
@@ -166,10 +177,10 @@ export function SourceCodeOverlay() {
                     soundEngine.playShutter();
                     setActiveTab(idx);
                   }}
-                  className={`inline-flex items-center gap-2 border px-3.5 py-2 transition ${
+                  className={`inline-flex items-center gap-2 rounded border px-3.5 py-2 transition ${
                     activeTab === idx
-                      ? "border-darkroom-amber bg-darkroom-amber/15 text-darkroom-amber font-semibold"
-                      : "border-darkroom-border bg-[#0E0E0E] text-darkroom-muted hover:text-white"
+                      ? "border-amber-500/60 bg-amber-500/15 text-amber-400 font-medium"
+                      : "border-neutral-800 bg-[#0E0E0E] text-neutral-400 hover:text-white"
                   }`}
                 >
                   <FileCode className="h-3.5 w-3.5" />
@@ -178,19 +189,18 @@ export function SourceCodeOverlay() {
               ))}
             </div>
 
-            {/* Code Buffer with Line Numbers */}
-            <div className="mt-3 flex-1 overflow-auto border border-darkroom-border bg-[#050505] p-4 font-mono text-xs leading-relaxed">
-              <div className="mb-3 border-b border-darkroom-border/60 pb-2 text-[11px] text-darkroom-muted">
+            <div className="mt-3 flex-1 overflow-auto rounded-md border border-neutral-800 bg-[#050505] p-4 font-mono text-xs leading-relaxed">
+              <div className="mb-3 border-b border-neutral-800 pb-2 text-[11px] text-neutral-500">
                 {currentFile.lang}
               </div>
               <pre className="overflow-x-auto">
                 <code>
                   {currentFile.code.split("\n").map((line, idx) => (
                     <div key={idx} className="table-row hover:bg-white/5">
-                      <span className="table-cell select-none pr-4 text-right text-darkroom-muted/50">
+                      <span className="table-cell select-none pr-4 text-right text-neutral-600">
                         {String(idx + 1).padStart(2, "0")}
                       </span>
-                      <span className="table-cell text-darkroom-silver">
+                      <span className="table-cell text-neutral-300">
                         {highlightLine(line)}
                       </span>
                     </div>

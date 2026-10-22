@@ -23,6 +23,7 @@ export interface PhotoRecord {
   };
   caption: string;
   src: string;
+  fallbackSrc?: string;
   aspect: string;
   palette: string[];
   seed: number;
@@ -78,12 +79,14 @@ const FRAGMENT_SHADER = /* glsl */ `
 
 function ShaderPhotoPlane({
   src,
+  fallbackSrc,
   seed,
   hovered,
   mouseUv,
   aberrationStrength,
 }: {
   src: string;
+  fallbackSrc?: string;
   seed: number;
   hovered: boolean;
   mouseUv: { x: number; y: number };
@@ -106,12 +109,22 @@ function ShaderPhotoPlane({
         setTexture(loaded);
       },
       undefined,
-      () => {}
+      () => {
+        if (fallbackSrc) {
+          loader.load(fallbackSrc, (fb) => {
+            if (!active) return;
+            fb.minFilter = THREE.LinearFilter;
+            fb.magFilter = THREE.LinearFilter;
+            fb.needsUpdate = true;
+            setTexture(fb);
+          });
+        }
+      }
     );
     return () => {
       active = false;
     };
-  }, [src]);
+  }, [src, fallbackSrc]);
 
   const uniforms = useMemo(
     () => ({
@@ -136,9 +149,9 @@ function ShaderPhotoPlane({
     uniforms.uHover.value = THREE.MathUtils.lerp(
       uniforms.uHover.value,
       hovered ? 1.0 : 0.0,
-      0.12
+      0.14
     );
-    uniforms.uMouse.value.lerp(new THREE.Vector2(mouseUv.x, 1.0 - mouseUv.y), 0.18);
+    uniforms.uMouse.value.lerp(new THREE.Vector2(mouseUv.x, 1.0 - mouseUv.y), 0.2);
     uniforms.uAberration.value = aberrationStrength;
   });
 
@@ -166,6 +179,7 @@ function PhotoCard({
   aberrationStrength: number;
 }) {
   const [hovered, setHovered] = useState(false);
+  const [imgSrc, setImgSrc] = useState(photo.src);
   const [mouseUv, setMouseUv] = useState({ x: 0.5, y: 0.5 });
 
   const handlePointerMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -190,12 +204,12 @@ function PhotoCard({
         aria-label={`Inspect ${photo.title}`}
         onClick={() => {
           soundEngine.playShutter();
-          onSelect(photo);
+          onSelect({ ...photo, src: imgSrc });
         }}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onSelect(photo);
+            onSelect({ ...photo, src: imgSrc });
           }
         }}
         onMouseEnter={() => {
@@ -207,15 +221,21 @@ function PhotoCard({
         className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden rounded border border-neutral-800 bg-black"
       >
         <img
-          src={photo.src}
+          src={imgSrc}
           alt={photo.title}
           loading="lazy"
+          onError={() => {
+            if (photo.fallbackSrc && imgSrc !== photo.fallbackSrc) {
+              setImgSrc(photo.fallbackSrc);
+            }
+          }}
           className={`h-full w-full object-cover grayscale transition-transform duration-700 ${
             hovered ? "scale-[1.03]" : "scale-100"
           }`}
         />
 
-        {webglEnabled && (
+        {/* Mount WebGL context ONLY when card is actively hovered (1 WebGL context instead of 6) */}
+        {webglEnabled && hovered && (
           <div className="pointer-events-none absolute inset-0">
             <Canvas
               camera={{ position: [0, 0, 2.15], fov: 50 }}
@@ -223,7 +243,8 @@ function PhotoCard({
               gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
             >
               <ShaderPhotoPlane
-                src={photo.src}
+                src={imgSrc}
+                fallbackSrc={photo.fallbackSrc}
                 seed={photo.seed}
                 hovered={hovered}
                 mouseUv={mouseUv}
@@ -313,7 +334,7 @@ export function WebGLGallery() {
               Monochrome Film Archive (WebGL2)
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-neutral-400">
-              Medium-format and 35mm black-and-white studies rendered through a custom GLSL displacement and chromatic dispersion shader.
+              Medium-format and 35mm black-and-white studies. Hover any frame to mount the live GLSL wave-displacement and chromatic dispersion shader.
             </p>
           </div>
 
