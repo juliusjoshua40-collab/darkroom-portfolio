@@ -6,18 +6,95 @@ import { PORTFOLIO_CONTENT } from "@/config/content";
 import { soundEngine } from "@/utils/sound";
 import type { GitHubActivityItem } from "@/app/api/github/route";
 
+const CLIENT_FALLBACK_ACTIVITY: GitHubActivityItem[] = [
+  {
+    id: "gh-101",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/darkroom-portfolio",
+    message:
+      "fix: resolve 01A image URL, optimize single-context WebGL, connect live GitHub API, and add Adam + Gabor kernels",
+    branch: "main",
+    timestamp: "Today",
+    url: "https://github.com/juliusjoshua40-collab/darkroom-portfolio",
+  },
+  {
+    id: "gh-102",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/darkroom-portfolio",
+    message:
+      "refactor: redesign UI for authentic developer craft and add live SIREN MLP trainer + UMAP embedding explorer",
+    branch: "main",
+    timestamp: "Today",
+    url: "https://github.com/juliusjoshua40-collab/darkroom-portfolio",
+  },
+  {
+    id: "gh-103",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/SonicFlow",
+    message: "feat: audio DSP pipeline and real-time reactive visualizer",
+    branch: "main",
+    timestamp: "Recent",
+    url: "https://github.com/juliusjoshua40-collab/SonicFlow",
+  },
+  {
+    id: "gh-104",
+    type: "PushEvent",
+    repo: "juliusjoshua40-collab/lagoslife",
+    message: "perf: optimize interactive state and viewport rendering",
+    branch: "main",
+    timestamp: "Recent",
+    url: "https://github.com/juliusjoshua40-collab/lagoslife",
+  },
+];
+
 export function LiveWidgets() {
-  const [activity, setActivity] = useState<GitHubActivityItem[]>([]);
+  const [activity, setActivity] = useState<GitHubActivityItem[]>(CLIENT_FALLBACK_ACTIVITY);
   const [loading, setLoading] = useState(true);
 
   const fetchActivity = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/github");
-      const data = await res.json();
-      setActivity(data.items || []);
+      // Try public GitHub API directly first (works on both localhost, Vercel, and static GitHub Pages)
+      const ghRes = await fetch(
+        "https://api.github.com/users/juliusjoshua40-collab/events/public?per_page=6"
+      );
+      if (ghRes.ok) {
+        const raw = await ghRes.json();
+        if (Array.isArray(raw) && raw.length > 0) {
+          const items: GitHubActivityItem[] = raw.slice(0, 5).map((ev: any, idx: number) => ({
+            id: String(ev.id || idx),
+            type: ev.type || "PushEvent",
+            repo: ev.repo?.name || "juliusjoshua40-collab/darkroom-portfolio",
+            message:
+              ev.payload?.commits?.[0]?.message ||
+              ev.payload?.pull_request?.title ||
+              `Updated ${ev.repo?.name || "repository"}`,
+            branch: (ev.payload?.ref || "refs/heads/main").replace("refs/heads/", ""),
+            timestamp: new Date(ev.created_at || Date.now()).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            }),
+            url: `https://github.com/${ev.repo?.name || "juliusjoshua40-collab"}`,
+          }));
+          setActivity(items);
+          setLoading(false);
+          return;
+        }
+      }
     } catch {
-      // ignore
+      // Fall back to /api/github or static fallback
+    }
+
+    try {
+      const res = await fetch("/api/github");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.items) && data.items.length > 0) {
+          setActivity(data.items);
+        }
+      }
+    } catch {
+      // Keep CLIENT_FALLBACK_ACTIVITY
     } finally {
       setLoading(false);
     }
@@ -81,7 +158,14 @@ export function LiveWidgets() {
                 <div key={item.id} className="py-3.5 first:pt-0 last:pb-0">
                   <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
                     <div className="flex items-center gap-2 text-neutral-300">
-                      <span className="font-medium text-white">{item.repo}</span>
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium text-white hover:text-amber-400"
+                      >
+                        {item.repo}
+                      </a>
                       <span className="inline-flex items-center gap-1 text-neutral-500">
                         <GitBranch className="h-3 w-3" />
                         {item.branch}

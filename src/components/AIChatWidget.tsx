@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageSquare, Send, Sparkles, X, Bot, User } from "lucide-react";
+import { MessageSquare, Send, X, Bot, User } from "lucide-react";
 import { PORTFOLIO_CONTENT } from "@/config/content";
 import { soundEngine } from "@/utils/sound";
 
@@ -13,11 +13,49 @@ interface ChatMessage {
 }
 
 const SUGGESTED_PROMPTS = [
+  "How does the Adam SIREN trainer work?",
   "What projects have you built?",
   "What is your core tech stack?",
-  "Tell me about your analog photography",
-  "Are you available to hire?",
+  "How can I contact or hire you?",
 ];
+
+function localTechnicalReply(question: string): string {
+  const q = question.toLowerCase();
+
+  for (const proj of PORTFOLIO_CONTENT.projects) {
+    const firstWord = proj.title.split(" ")[0].toLowerCase();
+    if (q.includes(firstWord) || q.includes(proj.id.toLowerCase())) {
+      return `${proj.title} (${proj.role})\n\n• Summary: ${proj.oneLiner}\n• Problem: ${proj.problem}\n• Solution: ${proj.solution}\n• Stack: ${proj.stack.join(", ")}`;
+    }
+  }
+
+  if (
+    q.includes("deep learning") ||
+    q.includes("neural") ||
+    q.includes("siren") ||
+    q.includes("adam") ||
+    q.includes("backprop") ||
+    q.includes("ml")
+  ) {
+    return `${PORTFOLIO_CONTENT.name}'s Deep Learning Lab (Section 04) runs 100% client-side in TypeScript:\n• Coordinate MLP: Trains a 2-layer network f_θ(x,y) → I at 60fps using analytical chain-rule backpropagation and bias-corrected Adam (β₁=0.9, β₂=0.999).\n• Spectral Bias: Switch between SIREN sin(ω₀z), Leaky ReLU, and Tanh to watch why periodic activations converge on high-frequency rings.\n• 2D Kernels: Live 3×3 Sobel and 5×5 oriented Gabor convolutions.`;
+  }
+
+  if (q.includes("project") || q.includes("built") || q.includes("work")) {
+    return PORTFOLIO_CONTENT.projects
+      .map((p) => `• ${p.title}: ${p.oneLiner}`)
+      .join("\n\n");
+  }
+
+  if (q.includes("stack") || q.includes("skill") || q.includes("tech")) {
+    return `Core Stack:\n• ML & Vision: PyTorch, Coordinate MLPs (SIREN), 2D Gabor/Sobel kernels, ONNX Runtime Web, Vector Embeddings\n• Frontend & GPU: TypeScript, React 18, Next.js, WebGL2 / Three.js, GLSL, HTML5 Canvas\n• Systems: Python, Node.js, PostgreSQL (pgvector), Git`;
+  }
+
+  if (q.includes("hire") || q.includes("contact") || q.includes("email")) {
+    return `${PORTFOLIO_CONTENT.name} is ${PORTFOLIO_CONTENT.availability.toLowerCase()}.\n• Email: ${PORTFOLIO_CONTENT.contact.email}\n• GitHub: ${PORTFOLIO_CONTENT.contact.github}\n• Tip: Open the CLI (⌘K) and run 'sudo hire-me'.`;
+  }
+
+  return `${PORTFOLIO_CONTENT.name} is a ${PORTFOLIO_CONTENT.role} (${PORTFOLIO_CONTENT.location}). Ask about MicroSIREN, SonicFlow, LagosLife, WebGL shaders, or contact details (${PORTFOLIO_CONTENT.contact.email}).`;
+}
 
 export function AIChatWidget() {
   const [open, setOpen] = useState(false);
@@ -27,7 +65,7 @@ export function AIChatWidget() {
     {
       id: "welcome",
       role: "assistant",
-      text: `Safelight AI online. Ask me anything about ${PORTFOLIO_CONTENT.name}'s WebGL & full-stack engineering projects, analog photography, or availability.`,
+      text: `Hi — ask me anything about ${PORTFOLIO_CONTENT.name}'s deep learning experiments, WebGL projects, or engineering background.`,
     },
   ]);
 
@@ -60,24 +98,33 @@ export function AIChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed }),
       });
-      const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `a-${Date.now()}`,
-          role: "assistant",
-          text:
-            data.reply ||
-            `Reach out directly at ${PORTFOLIO_CONTENT.contact.email} for full details.`,
-        },
-      ]);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            text: data.reply || localTechnicalReply(trimmed),
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            text: localTechnicalReply(trimmed),
+          },
+        ]);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
         {
           id: `e-${Date.now()}`,
           role: "assistant",
-          text: `Connection interrupted. You can reach ${PORTFOLIO_CONTENT.name} directly at ${PORTFOLIO_CONTENT.contact.email}.`,
+          text: localTechnicalReply(trimmed),
         },
       ]);
     } finally {
@@ -90,30 +137,27 @@ export function AIChatWidget() {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: 18, scale: 0.95 }}
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.95 }}
-            className="mb-3 flex h-[460px] w-[340px] sm:w-[390px] flex-col border border-darkroom-amber/80 bg-[#0B0B0B] shadow-[0_0_50px_rgba(255,159,28,0.25)]"
+            exit={{ opacity: 0, y: 14, scale: 0.96 }}
+            className="mb-3 flex h-[440px] w-[340px] sm:w-[380px] flex-col rounded-md border border-neutral-700 bg-[#0E0E0E] shadow-2xl"
             role="dialog"
-            aria-label="Ask Me Anything AI Assistant"
+            aria-label="Ask AI Assistant"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-darkroom-border bg-[#121212] px-4 py-3">
-              <div className="flex items-center gap-2 text-xs text-darkroom-amber">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span className="font-bold tracking-wider">ASK ME ANYTHING // AI LOUPE</span>
-              </div>
+            <div className="flex items-center justify-between border-b border-neutral-800 bg-[#141414] px-4 py-3">
+              <span className="text-xs font-medium text-white">
+                Engineering Assistant
+              </span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close AI Chat"
-                className="text-darkroom-muted hover:text-darkroom-amber"
+                className="text-neutral-400 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Messages */}
             <div className="flex-1 space-y-3 overflow-y-auto p-3.5 text-xs">
               {messages.map((m) => (
                 <div
@@ -123,69 +167,67 @@ export function AIChatWidget() {
                   }`}
                 >
                   {m.role === "assistant" && (
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-darkroom-amber/60 bg-darkroom-amber/10 text-darkroom-amber">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-neutral-700 bg-neutral-900 text-amber-400">
                       <Bot className="h-3.5 w-3.5" />
                     </span>
                   )}
                   <div
-                    className={`max-w-[82%] whitespace-pre-line border p-2.5 leading-relaxed ${
+                    className={`max-w-[82%] whitespace-pre-line rounded border p-2.5 leading-relaxed ${
                       m.role === "user"
-                        ? "border-darkroom-amber bg-darkroom-amber/15 text-white"
-                        : "border-darkroom-border bg-black/70 text-darkroom-silver"
+                        ? "border-neutral-700 bg-neutral-800 text-white"
+                        : "border-neutral-800 bg-black/70 text-neutral-200"
                     }`}
                   >
                     {m.text}
                   </div>
                   {m.role === "user" && (
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center border border-darkroom-border bg-darkroom-surface text-darkroom-muted">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border border-neutral-800 bg-neutral-900 text-neutral-400">
                       <User className="h-3.5 w-3.5" />
                     </span>
                   )}
                 </div>
               ))}
               {loading && (
-                <div className="text-[11px] text-darkroom-amber animate-pulse">
-                  Developing response in chemical bath...
+                <div className="text-[11px] text-neutral-400 animate-pulse">
+                  Thinking...
                 </div>
               )}
               <div ref={endRef} />
             </div>
 
-            {/* Suggested Prompt Pills */}
-            <div className="flex flex-wrap gap-1 border-t border-darkroom-border/60 bg-[#0E0E0E] px-3 py-2">
+            <div className="flex flex-wrap gap-1 border-t border-neutral-800 bg-[#111] px-3 py-2">
               {SUGGESTED_PROMPTS.map((q) => (
                 <button
                   key={q}
                   type="button"
                   onClick={() => sendQuestion(q)}
-                  className="border border-darkroom-border bg-black px-2 py-0.5 text-[10px] text-darkroom-muted hover:border-darkroom-amber hover:text-darkroom-amber"
+                  className="rounded border border-neutral-800 bg-black px-2 py-0.5 text-[10px] text-neutral-400 hover:border-neutral-700 hover:text-white"
                 >
                   {q}
                 </button>
               ))}
             </div>
 
-            {/* Input Form */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 sendQuestion(input);
               }}
-              className="flex items-center gap-2 border-t border-darkroom-border bg-[#121212] p-2.5"
+              className="flex items-center gap-2 border-t border-neutral-800 bg-[#141414] p-2.5"
             >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about projects, shaders, or hiring..."
+                placeholder="Ask a question..."
                 aria-label="Ask AI assistant a question"
-                className="flex-1 bg-black px-2.5 py-1.5 text-xs text-white placeholder-darkroom-muted border border-darkroom-border focus:border-darkroom-amber focus:outline-none"
+                className="flex-1 rounded border border-neutral-800 bg-black px-2.5 py-1.5 text-xs text-white placeholder-neutral-500 focus:border-amber-500 focus:outline-none"
               />
               <button
                 type="submit"
                 disabled={loading}
                 aria-label="Send message"
-                className="border border-darkroom-amber bg-darkroom-amber p-1.5 text-black hover:bg-white disabled:opacity-50"
+                className="rounded bg-white p-1.5 text-black hover:bg-neutral-200 disabled:opacity-50"
               >
                 <Send className="h-3.5 w-3.5" />
               </button>
@@ -194,19 +236,17 @@ export function AIChatWidget() {
         )}
       </AnimatePresence>
 
-      {/* Floating Launcher Button */}
       <button
         type="button"
         onClick={() => {
           soundEngine.playShutter();
           setOpen((prev) => !prev);
         }}
-        onMouseEnter={() => soundEngine.playHover()}
         aria-expanded={open}
-        className="flex items-center gap-2 border border-darkroom-amber bg-[#0D0D0D] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-darkroom-amber shadow-[0_0_25px_rgba(255,159,28,0.28)] transition hover:bg-darkroom-amber hover:text-black"
+        className="flex items-center gap-2 rounded-md border border-neutral-700 bg-[#111] px-4 py-2.5 text-xs font-medium text-white shadow-lg transition hover:border-neutral-500"
       >
-        <MessageSquare className="h-4 w-4" />
-        <span>Ask AI Assistant</span>
+        <MessageSquare className="h-4 w-4 text-amber-500" />
+        <span>Ask AI</span>
       </button>
     </div>
   );
