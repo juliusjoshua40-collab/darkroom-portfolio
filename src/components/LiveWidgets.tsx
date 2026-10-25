@@ -4,7 +4,15 @@ import React, { useEffect, useState } from "react";
 import { GitBranch, GitCommit, RefreshCw } from "lucide-react";
 import { PORTFOLIO_CONTENT } from "@/config/content";
 import { soundEngine } from "@/utils/sound";
-import type { GitHubActivityItem } from "@/app/api/github/route";
+export interface GitHubActivityItem {
+  id: string;
+  type: string;
+  repo: string;
+  message: string;
+  branch: string;
+  timestamp: string;
+  url: string;
+}
 
 const CLIENT_FALLBACK_ACTIVITY: GitHubActivityItem[] = [
   {
